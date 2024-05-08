@@ -1,5 +1,4 @@
 services:
-
   frontend:
     build: ./frontend
     container_name: frontend
@@ -7,6 +6,8 @@ services:
       - backend
     ports:
       - "8080:80"
+    env_file:
+      - .env
 
   backend:
     build: ./backend
@@ -15,6 +16,8 @@ services:
       - db
     ports:
       - "3000:3000"
+    env_file:
+      - .env
 
   db:
     image: postgres
@@ -23,6 +26,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - ./db/database.sql:/docker-entrypoint-initdb.d/create_db.sql

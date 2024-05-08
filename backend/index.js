@@ -8,6 +8,15 @@ const cors = require("cors");
 
 const port = 3000;
 
+const allowedOrigins = [
+  "http://localhost",
+  "https://localhost",
+  "https://localhost:3000",
+  "http://localhost:3000",
+  "http://localhost:8080",
+  "https://localhost:8080",
+];
+
 const pool = new pg.Pool({
   user: "secadv",
   host: "db",
@@ -19,7 +28,17 @@ const pool = new pg.Pool({
 
 console.log("Connecting...:");
 
-app.use(cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Toegang geweigerd door CORS"));
+      }
+    },
+  }),
+);
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
