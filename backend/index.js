@@ -1,4 +1,5 @@
 const pg = require("pg");
+require("dotenv").config();
 const bcrypt = require("bcrypt");
 
 const express = require("express");
@@ -18,11 +19,11 @@ const allowedOrigins = [
 ];
 
 const pool = new pg.Pool({
-  user: "secadv",
-  host: "db",
-  database: "pxldb",
-  password: "ilovesecurity",
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASS,
+  port: process.env.DB_PORT,
   connectionTimeoutMillis: 5000,
 });
 
@@ -90,31 +91,25 @@ app.get("/authenticate/:username/:password", async (request, response) => {
   });
 });
 
-app.post("/register", async (request, response) => {
-  const { username, password } = request.body;
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const query = "INSERT INTO users (user_name, password) VALUES ($1, $2)";
-  const values = [username, hashedPassword];
-
-  pool.query(query, values, (error, result) => {
-    if (error) {
-      response.status(500).json({ error: "Internal server error" });
-    } else {
-      response.status(201).json({ message: "User registered successfully" });
-    }
-  });
-});
-
 async function addInitialUsers() {
   try {
-    const hashedPassword1 = await bcrypt.hash("insecureandlovinit", 10);
-    const hashedPassword2 = await bcrypt.hash("iwishihadbetteradmins", 10);
+    const hashedPassword1 = await bcrypt.hash(
+      process.env.INITIAL_ADMIN_PASSWORD,
+      10,
+    );
+    const hashedPassword2 = await bcrypt.hash(
+      process.env.INITIAL_USER_PASSWORD,
+      10,
+    );
 
     await pool.query(
       "INSERT INTO users (user_name, password) VALUES ($1, $2), ($3, $4)",
-      ["pxl-admin", hashedPassword1, "george", hashedPassword2],
+      [
+        process.env.INITIAL_ADMIN_NAME,
+        hashedPassword1,
+        process.env.INITIAL_USER_NAME,
+        hashedPassword2,
+      ],
     );
     console.log("Initial users added successfully");
   } catch (error) {
@@ -123,30 +118,6 @@ async function addInitialUsers() {
 }
 
 addInitialUsers();
-
-//async function insertUsersFromFile(filePath) {
-//  try {
-//    const data = fs.readFileSync(filePath, "utf8");
-//    const lines = data.split("\n");
-//
-//    for (const line of lines) {
-//      const [username, hashedPassword] = line.split(",");
-//
-//      await pool.query(
-//        "INSERT INTO users (user_name, password) VALUES ($1, $2)",
-//        [username, hashedPassword],
-//      );
-//    }
-//
-//   console.log("Users inserted successfully");
-//  } catch (error) {
-//    console.error("Error inserting users:", error.message);
-//  } finally {
-//    pool.end();
-//  }
-//}
-
-//insertUsersFromFile("users_data.txt");
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`);
